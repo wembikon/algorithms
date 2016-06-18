@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="View of Algorithms">
-<meta name="keywords" content="Algorithms, Sorting, Selection">
+<meta name="keywords" content="Algorithms, Sorting, Insertion">
 <meta name="author" content="Adrian T. Visarra">
-<title>Selection Sort</title>
+<title>Insertion Sort</title>
 <script>
 
 
 //==============================================
-var ELEMENTSIZE = 10;
+var ELEMENTSIZE = 50;
 var DELAY = 10;
 //==============================================
 
@@ -73,7 +73,7 @@ function draw(){
 		ctx.stroke();
 	}
 }
-var minIndex;
+var currentValue;
 var counter1;
 var counter2;
 var loop1Limit;
@@ -83,11 +83,11 @@ var loop2Delay;
 function looper1(){
 	setTimeout(function(){
 		if(counter1<loop1Limit){
-			//loop body======			
-			minIndex = counter1;				
 			//loop body======
-			counter2=counter1+1;
-			loop2Limit=array_items.length;
+			currentValue = array_items[counter1];
+			//loop body======
+			counter2=counter1-1;
+			loop2Limit=0;
 			loop2Delay=DELAY;
 			looper2();
 		}else{			
@@ -97,52 +97,36 @@ function looper1(){
 }
 function looper2(){
 	setTimeout(function(){
-		if(counter2<loop2Limit){	
+		if(counter2>=loop2Limit && array_items[counter2]>currentValue){			
 			draw();
 			//loop body======
-			if(array_items[counter2] < array_items[minIndex]){
-				minIndex = counter2;
-			}			
+			array_items[counter2+1] = array_items[counter2];			
 			//loop body======
-			counter2++;
-			looper2();
+			counter2--;
+			looper2();			
 		}else{
-			if(minIndex != counter2){
-				var tmp = array_items[counter1];
-				array_items[counter1] = array_items[minIndex];
-				array_items[minIndex] = tmp;
-			}
+			array_items[counter2+1] = currentValue;
 			counter1++;
 			looper1();
 		}
 	}, loop2Delay);
 }
-function selectionSort(){	
-	counter1=0;
-	minIndex=counter1;	
-	loop1Limit=array_items.length-1;
-	loop1Delay=0;		
+function insertionSort(){
+	counter1=1;
+	loop1Limit=array_items.length;
+	loop1Delay=0;
 	looper1();
 
 	/*//========================================
-	//algorithm for selection sort
-	//1. assume first element is the minimum. save index
-	//2. find the minimum in the remaining elements
-	//3. when minimum is found, save its index
-	//4. when the loop ends, swap the values of the new minimum
-	//5. loop until all elements are iterated
-	for(var i=0;i<array_items.length-1;i++){
-		var minIndex = i;
-		for(var j=i+1;j<array_items.length;j++){
-			if(array_items[j] < array_items[minIndex]){
-				minIndex = j;
-			}
+	//algorithm for insertion sort
+	for(var i=1;i<array_items.length;i++){
+		var currentValue = array_items[i];
+		var j=i-1;
+		while(j>=0 && array_items[j] > currentValue){			
+				array_items[j+1] = array_items[j];
+				j--;
 		}
-		if(minIndex != i){
-			var tmp = array_items[i];
-			array_items[i] = array_items[minIndex];
-			array_items[minIndex] = tmp;
-		}
+		array_items[j+1] = currentValue;
 	}
 	draw();
 	//========================================*/
@@ -180,7 +164,7 @@ function run(){
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
 	window.onresize=resizeEvent;//only attach this even after we get the number of elements
-	selectionSort();
+	insertionSort();
 }
 window.onload = run;
 </script>
@@ -191,7 +175,7 @@ window.onload = run;
 </style>
 </head>
 <body>
-<p>Selection Sort Algorithm</p>
+<p>Insertion Sort Algorithm</p>
 <canvas id="board"></canvas>
 <div id="debugger"></div>
 </body>

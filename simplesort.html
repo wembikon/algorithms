@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="View of Algorithms">
-<meta name="keywords" content="Algorithms, Sorting, Selection">
+<meta name="keywords" content="Algorithms, Sorting, Simple">
 <meta name="author" content="Adrian T. Visarra">
-<title>Selection Sort</title>
+<title>Simple Sort</title>
 <script>
 
 
@@ -73,7 +73,6 @@ function draw(){
 		ctx.stroke();
 	}
 }
-var minIndex;
 var counter1;
 var counter2;
 var loop1Limit;
@@ -84,7 +83,7 @@ function looper1(){
 	setTimeout(function(){
 		if(counter1<loop1Limit){
 			//loop body======			
-			minIndex = counter1;				
+			
 			//loop body======
 			counter2=counter1+1;
 			loop2Limit=array_items.length;
@@ -97,55 +96,41 @@ function looper1(){
 }
 function looper2(){
 	setTimeout(function(){
-		if(counter2<loop2Limit){	
+		if(counter2<loop2Limit){			
 			draw();
 			//loop body======
-			if(array_items[counter2] < array_items[minIndex]){
-				minIndex = counter2;
+			if(array_items[counter2] < array_items[counter1]){
+				var tmp = array_items[counter2];
+				array_items[counter2] = array_items[counter1];
+				array_items[counter1] = tmp;				
 			}			
 			//loop body======
 			counter2++;
 			looper2();
 		}else{
-			if(minIndex != counter2){
-				var tmp = array_items[counter1];
-				array_items[counter1] = array_items[minIndex];
-				array_items[minIndex] = tmp;
-			}
 			counter1++;
 			looper1();
 		}
 	}, loop2Delay);
 }
-function selectionSort(){	
-	counter1=0;
-	minIndex=counter1;	
+function simpleSort(){
+	counter1=0;	
 	loop1Limit=array_items.length-1;
-	loop1Delay=0;		
+	loop1Delay=0;	
 	looper1();
-
-	/*//========================================
-	//algorithm for selection sort
-	//1. assume first element is the minimum. save index
-	//2. find the minimum in the remaining elements
-	//3. when minimum is found, save its index
-	//4. when the loop ends, swap the values of the new minimum
-	//5. loop until all elements are iterated
-	for(var i=0;i<array_items.length-1;i++){
-		var minIndex = i;
+	/*algorithm for simple sort
+	//1. compare current and next values
+	//2. if next is less than current value swap them
+	//3. loop. do this all items are compared
+	for(var i=0;i<array_items.length;i++){
 		for(var j=i+1;j<array_items.length;j++){
-			if(array_items[j] < array_items[minIndex]){
-				minIndex = j;
+			if(array_items[j] < array_items[i]){
+				var tmp = array_items[j];
+				array_items[j] = array_items[i];
+				array_items[i] = tmp;
 			}
 		}
-		if(minIndex != i){
-			var tmp = array_items[i];
-			array_items[i] = array_items[minIndex];
-			array_items[minIndex] = tmp;
-		}
-	}
-	draw();
-	//========================================*/
+	}*/
 }
 function generateInput(size){
 	var tmparray = [];
@@ -179,8 +164,8 @@ function run(){
 	canvas_board = document.getElementById("board");	
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
-	window.onresize=resizeEvent;//only attach this even after we get the number of elements
-	selectionSort();
+	window.onresize=resizeEvent;
+	simpleSort();
 }
 window.onload = run;
 </script>
@@ -191,7 +176,7 @@ window.onload = run;
 </style>
 </head>
 <body>
-<p>Selection Sort Algorithm</p>
+<p>Simple Sort Algorithm</p>
 <canvas id="board"></canvas>
 <div id="debugger"></div>
 </body>
