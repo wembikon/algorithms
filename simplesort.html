@@ -137,7 +137,7 @@ function generateInput(size){
 	for(var i=1;i<=size;i++){
 		tmparray.push(i);
 	}
-	var randomindex=Math.floor((Math.random() * size) + 1);
+	var randomindex=Math.floor((Math.random() * size));
 	for(var i=0;i<size;i++){
 		while(tmparray[randomindex] == -1){
 			randomindex = Math.floor((Math.random() * size));
