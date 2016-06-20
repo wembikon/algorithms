@@ -148,13 +148,13 @@ function generateInput(size){
 function resizeEvent(){
 	var remainder = window.innerWidth%(array_items.length+1);
 	var factor = Math.floor(window.innerWidth/(array_items.length+1));
-	canvas_board.setAttribute('width', window.innerWidth-remainder-factor);//give right margin and remove remainder
-	canvas_board.setAttribute('height', window.innerHeight-100);
+	canvas_board.setAttribute('width', window.innerWidth-remainder-factor);//right margin
+	canvas_board.setAttribute('height', window.innerHeight-100);//bottom margin
 	draw();
 }
 function onDone(){
 	counter1 = -1;//clear shade
-	counter2 = -2;//clear shade
+	counter2 = -1;//clear shade
 	draw();
 	debug("--DONE--");
 }
