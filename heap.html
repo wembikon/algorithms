@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="View of Algorithms">
+<meta name="keywords" content="Algorithms, Data Structure, Heap">
+<meta name="author" content="Adrian T. Visarra">
+<meta name="date" content="June 25, 2016">
+<meta name="email" content="beaujamo@gmail.com">
+<meta name="algorithm" content="we created a heap from the input array. then we get the max heap for each parent node.">
+<title>Heap Data Structure</title>
+<script>
+
+
+//==============================================
+var ELEMENTSIZE = 50;
+var DELAY = 100;
+//==============================================
+
+
+var debug_board;
+var canvas_board;
+var array_items = [];
+var array_items_animated = [];
+var moves = [];
+function debug(text){
+	var li = document.createElement("li");
+	var textnode = document.createTextNode(text);
+	li.appendChild(textnode);
+	debug_board.insertBefore(li, debug_board.firstChild);
+}
+function left(node){
+	return ((node * 2) + 1);
+}
+function right(node){
+	return ((node * 2) + 2);
+}
+function parent(node){
+	return Math.floor((node - 1) / 2);
+}
+var currentFromIndex=-1;
+var currentToIndex=-1;
+function draw(){	
+	var ctx = canvas_board.getContext("2d");
+	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);	
+	
+	if(array_items.length <= 0){
+		return;
+	}
+	
+	var boxWidth = canvas_board.width;
+	var boxHeight = canvas_board.height;
+	
+	var levels = Math.floor(Math.log2(array_items.length));
+	var bottomElementCount = Math.pow(2, levels);
+	
+	var circleBoxHeight = Math.floor(boxHeight / (levels+1));
+	var centerHeightOffset = Math.floor(circleBoxHeight / 2);
+	
+	var radius = (array_items.length > 30) ? 12 : 20;
+	var index = 0;	
+	for(i=0;i<=levels;++i){
+		var levelElementCount = Math.floor(Math.pow(2, i));
+		var levelBoxWidth = boxWidth / levelElementCount;		
+		var centerWidthOffset = Math.floor(levelBoxWidth / 2);
+		
+		for(j=0;index<array_items.length && j<levelElementCount;++j){
+			var centerX = ((j+1)*levelBoxWidth) - centerWidthOffset;
+			var centerY = (i*circleBoxHeight) + centerHeightOffset;			
+			if(index==currentFromIndex || index==currentToIndex){
+				ctx.fillStyle = "rgb(255,0,0)";
+			}else{
+				ctx.fillStyle = "#91e600";
+			}
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.font = '12pt Calibri';
+			ctx.fillStyle = 'black';
+			ctx.textAlign = 'center';
+			ctx.fillText(array_items_animated[index], centerX, centerY+5);//for animation
+			//ctx.fillText(array_items[index], centerX, centerY+5);//for calculation
+			//ctx.fillText(index, centerX, centerY+5);//for debugging
+			index++;
+		}		
+	}
+}
+function debugHeap(){
+	var levels = Math.floor(Math.log2(ELEMENTSIZE));
+	for(var i=0;i<=levels;++i){
+		var s = "";
+		var w = Math.floor(Math.pow(2, i));		
+		for(var j=w-1;j<array_items.length && j<w+w-1;++j){
+			s += array_items[j]+", ";
+		}
+		debug(s);
+	}	
+}
+var loopLimit;
+var loopDelay;
+var counter = 0;
+function looper(){
+	setTimeout(function(){
+		//if one element only, we will not go inside here
+		if(counter<loopLimit){			
+			//body======			
+			currentFromIndex = moves[counter].fromNode;
+			currentToIndex = moves[counter].toNode;
+			if(moves[counter].isSwap==true){
+				var tmp = array_items_animated[moves[counter].toNode];
+				array_items_animated[moves[counter].toNode] = array_items_animated[moves[counter].fromNode];
+				array_items_animated[moves[counter].fromNode] = tmp;
+			}			
+			
+			draw();			
+			counter++;
+			//body======
+			if(counter<loopLimit){
+				looper();
+			}else{
+				//for animation purposes. we loop one last time to clear the shaded elements in sync with timeout
+				looper();
+			}
+		}else{
+			onDone();
+		}
+	}, loopDelay);
+}
+function animateHeapify(){
+	counter = 0;
+	loopLimit = moves.length;
+	loopDelay = DELAY;
+	
+	looper();
+}
+//sift-down
+function maxHeapify(node){
+	var l = left(node);
+	var r = right(node);
+	var largest = node;//assume
+		
+	if(l < array_items.length){
+		//we only animate valid element
+		moves.push({'fromNode':largest, 'toNode':l, 'isSwap':false});
+		if(array_items[l] > array_items[largest]){
+			largest = l;
+		}
+	}	
+	if(r < array_items.length){
+		moves.push({'fromNode':largest, 'toNode':r, 'isSwap':false});
+		if(array_items[r] > array_items[largest]){
+			largest = r;
+		}
+	}
+	
+	if(largest != node){
+		//swap new largest with node
+		var tmp = array_items[node];
+		array_items[node] = array_items[largest];
+		array_items[largest] = tmp;
+		moves.push({'fromNode':node, 'toNode':largest, 'isSwap':true});
+		
+		maxHeapify(largest);
+	}
+}
+function buildMaxHeap(){
+	var lastParent = parent((array_items.length - 1));
+	if(lastParent <= 0){
+		return;
+	}
+	for(var i=lastParent;i>=0;--i){
+		maxHeapify(i);
+	}
+}
+function generateInput(size){
+	var tmparray = [];
+	for(var i=1;i<=size;i++){
+		tmparray.push(i);
+	}
+	var randomindex=Math.floor((Math.random() * size));
+	for(var i=0;i<size;i++){
+		while(tmparray[randomindex] == -1){
+			randomindex = Math.floor((Math.random() * size));
+		}
+		array_items.push(tmparray[randomindex]);
+		array_items_animated.push(tmparray[randomindex]);
+		tmparray[randomindex] = -1;
+	}
+}
+function resizeEvent(){
+	var remainder = window.innerWidth%(array_items.length+1);
+	var factor = Math.floor(window.innerWidth/(array_items.length+1));
+	canvas_board.setAttribute('width', window.innerWidth-remainder-factor);//right margin
+	canvas_board.setAttribute('height', window.innerHeight-100);//bottom margin
+	draw();
+}
+function onDone(){
+	currentFromIndex = -1;
+	currentToIndex = -1;
+	draw();
+	debug("--DONE--");
+}
+function run(){	
+	debug_board = document.getElementById("debugger");
+	canvas_board = document.getElementById("board");	
+	generateInput(ELEMENTSIZE);
+	resizeEvent();
+	window.onresize=resizeEvent;
+	buildMaxHeap();
+	animateHeapify();
+}
+window.onload = run;
+</script>
+<style>
+body{
+	background-color: black;
+}
+#board{
+	border: 1px solid #CCCCCC;
+	background-color: black;
+}
+</style>
+</head>
+<body text="white">
+<p>Heap Data Structure and Algorithm</p>
+<canvas id="board"></canvas>
+<div id="debugger"></div>
+</body>
+</html>

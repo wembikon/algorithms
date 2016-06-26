@@ -64,9 +64,9 @@ function draw(){
 		var height_offset = box_height - element_height;
 		ctx.moveTo(i*element_width+width_offset, height_offset);
 		if((counter1<array_items.length) && (i==counter1 || i==counter2)){
-			ctx.strokeStyle = '#CCCCCC';
+			ctx.strokeStyle = '#FF0000';
 		}else{
-			ctx.strokeStyle = '#000000';
+			ctx.strokeStyle = '#91e600';
 		}
 		ctx.lineWidth = element_width - 1;
 		ctx.lineTo(i*element_width+width_offset, element_height + height_offset);
@@ -170,12 +170,16 @@ function run(){
 window.onload = run;
 </script>
 <style>
+body{
+	background-color: black;
+}
 #board{
 	border: 1px solid #CCCCCC;
+	background-color: black;
 }
 </style>
 </head>
-<body>
+<body text="white">
 <p>Simple Sort Algorithm</p>
 <canvas id="board"></canvas>
 <div id="debugger"></div>
