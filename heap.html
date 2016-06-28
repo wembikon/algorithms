@@ -13,8 +13,9 @@
 
 
 //==============================================
-var ELEMENTSIZE = 50;
+var ELEMENTSIZE = 16;
 var DELAY = 100;
+var ANIMATIONDELAY = 50;
 //==============================================
 
 
@@ -23,68 +24,25 @@ var canvas_board;
 var array_items = [];
 var array_items_animated = [];
 var moves = [];
+
 function debug(text){
 	var li = document.createElement("li");
 	var textnode = document.createTextNode(text);
 	li.appendChild(textnode);
 	debug_board.insertBefore(li, debug_board.firstChild);
 }
-function left(node){
-	return ((node * 2) + 1);
-}
-function right(node){
-	return ((node * 2) + 2);
-}
-function parent(node){
-	return Math.floor((node - 1) / 2);
-}
-var currentFromIndex=-1;
-var currentToIndex=-1;
-function draw(){	
-	var ctx = canvas_board.getContext("2d");
-	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);	
-	
-	if(array_items.length <= 0){
-		return;
-	}
-	
-	var boxWidth = canvas_board.width;
-	var boxHeight = canvas_board.height;
-	
-	var levels = Math.floor(Math.log2(array_items.length));
-	var bottomElementCount = Math.pow(2, levels);
-	
-	var circleBoxHeight = Math.floor(boxHeight / (levels+1));
-	var centerHeightOffset = Math.floor(circleBoxHeight / 2);
-	
-	var radius = (array_items.length > 30) ? 12 : 20;
-	var index = 0;	
-	for(i=0;i<=levels;++i){
-		var levelElementCount = Math.floor(Math.pow(2, i));
-		var levelBoxWidth = boxWidth / levelElementCount;		
-		var centerWidthOffset = Math.floor(levelBoxWidth / 2);
-		
-		for(j=0;index<array_items.length && j<levelElementCount;++j){
-			var centerX = ((j+1)*levelBoxWidth) - centerWidthOffset;
-			var centerY = (i*circleBoxHeight) + centerHeightOffset;			
-			if(index==currentFromIndex || index==currentToIndex){
-				ctx.fillStyle = "rgb(255,0,0)";
-			}else{
-				ctx.fillStyle = "#91e600";
+function looper(parentLooperObj, looperObj){
+	setTimeout(function(){	
+		if(looperObj.limitActionFunc(looperObj.counter, looperObj.limit)){
+			var proceed = looperObj.bodyFunc(parentLooperObj, looperObj);
+			looperObj.counter = looperObj.counterActionFunc(looperObj.counter);
+			if(proceed==true){
+				looper(parentLooperObj, looperObj);
 			}
-			ctx.beginPath();
-			ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-			ctx.fill();
-			ctx.beginPath();
-			ctx.font = '12pt Calibri';
-			ctx.fillStyle = 'black';
-			ctx.textAlign = 'center';
-			ctx.fillText(array_items_animated[index], centerX, centerY+5);//for animation
-			//ctx.fillText(array_items[index], centerX, centerY+5);//for calculation
-			//ctx.fillText(index, centerX, centerY+5);//for debugging
-			index++;
-		}		
-	}
+		}else{
+			looperObj.doneFunc(parentLooperObj);
+		}
+	},looperObj.delay);
 }
 function debugHeap(){
 	var levels = Math.floor(Math.log2(ELEMENTSIZE));
@@ -95,44 +53,254 @@ function debugHeap(){
 			s += array_items[j]+", ";
 		}
 		debug(s);
-	}	
+	}
 }
-var loopLimit;
-var loopDelay;
-var counter = 0;
-function looper(){
-	setTimeout(function(){
-		//if one element only, we will not go inside here
-		if(counter<loopLimit){			
-			//body======			
-			currentFromIndex = moves[counter].fromNode;
-			currentToIndex = moves[counter].toNode;
-			if(moves[counter].isSwap==true){
-				var tmp = array_items_animated[moves[counter].toNode];
-				array_items_animated[moves[counter].toNode] = array_items_animated[moves[counter].fromNode];
-				array_items_animated[moves[counter].fromNode] = tmp;
-			}			
+function left(node){
+	return ((node * 2) + 1);
+}
+function right(node){
+	return ((node * 2) + 2);
+}
+function parent(node){
+	return Math.floor((node - 1) / 2);
+}
+
+var currentFromIndex=-1;
+var currentToIndex=-1;
+var isSwap=false;
+/*
+function draw2(){
+	if(array_items.length <= 0){//dont draw if nothing to draw
+		return;
+	}
+	
+	var ctx = canvas_board.getContext("2d");
+	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);		
+	
+	var boxWidth = canvas_board.width;
+	var boxHeight = canvas_board.height;
+	
+	var levels = Math.floor(Math.log2(array_items.length));
+	var bottomElementCount = Math.pow(2, levels);
+	
+	var circleBoxHeight = Math.floor(boxHeight / (levels+1));
+	var centerHeightOffset = Math.floor(circleBoxHeight / 2);
+		
+	var index = 0;
+	var fromProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
+	var toProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
+	for(i=0;i<=levels;++i){
+		var levelElementCount = Math.floor(Math.pow(2, i));
+		var levelBoxWidth = boxWidth / levelElementCount;		
+		var centerWidthOffset = Math.floor(levelBoxWidth / 2);
+		
+		for(j=0;index<array_items.length && j<levelElementCount;++j){
+			var radius = (array_items.length > 30) ? 12 : 20;
+			var centerX = ((j+1)*levelBoxWidth) - centerWidthOffset;
+			var centerY = (i*circleBoxHeight) + centerHeightOffset;
+			var txt = array_items_animated[index];
 			
-			draw();			
-			counter++;
-			//body======
-			if(counter<loopLimit){
-				looper();
-			}else{
-				//for animation purposes. we loop one last time to clear the shaded elements in sync with timeout
-				looper();
+			//save properties for animation later
+			if(index==currentFromIndex){
+				fromProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
+			}else if(index==currentToIndex){
+				toProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
 			}
-		}else{
-			onDone();
+			
+			ctx.beginPath();
+			ctx.fillStyle = "#91e600";			
+			ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+			
+			ctx.font = 'bold 12pt Calibri';
+			ctx.fillStyle = 'black';
+			ctx.textAlign = 'center';
+			ctx.fillText(txt, centerX, centerY+5);//for animation
+			index++;
 		}
-	}, loopDelay);
+		
+		//animate the two compared elements
+		ctx.beginPath();		
+		ctx.arc(fromProp.centerX, fromProp.centerY, fromProp.radius, 0, 2 * Math.PI, false);
+		ctx.fillStyle = "rgb(75,0,130)";
+		ctx.fill();
+		ctx.font = 'bold 12pt Calibri';
+		ctx.fillStyle = 'black';
+		ctx.textAlign = 'center';
+		ctx.fillText(fromProp.txt, fromProp.centerX, fromProp.centerY+5);
+		
+		ctx.beginPath();
+		ctx.arc(toProp.centerX, toProp.centerY, toProp.radius, 0, 2 * Math.PI, false);
+		ctx.fillStyle = "rgb(75,0,130)";
+		ctx.fill();
+		ctx.font = 'bold 12pt Calibri';
+		ctx.fillStyle = 'black';
+		ctx.textAlign = 'center';
+		ctx.fillText(toProp.txt, toProp.centerX, toProp.centerY+5);
+	}
+}*/
+function draw(){
+	if(array_items.length <= 0){//dont draw if nothing to draw
+		return;
+	}
+	
+	var ctx = canvas_board.getContext("2d");
+	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);		
+	
+	var boxWidth = canvas_board.width;
+	var boxHeight = canvas_board.height;
+	
+	var levels = Math.floor(Math.log2(array_items.length));
+	var bottomElementCount = Math.pow(2, levels);
+	
+	var circleBoxHeight = Math.floor(boxHeight / (levels+1));
+	var centerHeightOffset = Math.floor(circleBoxHeight / 2);
+		
+	var index = 0;
+	var fromProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
+	var toProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
+	
+	for(i=0;i<=levels;++i){
+		var levelElementCount = Math.floor(Math.pow(2, i));
+		var levelBoxWidth = boxWidth / levelElementCount;		
+		var centerWidthOffset = Math.floor(levelBoxWidth / 2);
+		
+		for(j=0;index<array_items.length && j<levelElementCount;++j){
+			var radius = (array_items.length > 30) ? 12 : 20;
+			var centerX = ((j+1)*levelBoxWidth) - centerWidthOffset;
+			var centerY = (i*circleBoxHeight) + centerHeightOffset;
+			var txt = array_items_animated[index];
+			
+			//save properties for animation later
+			if(index==currentFromIndex){
+				fromProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
+			}else if(index==currentToIndex){
+				toProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
+			}
+			
+			ctx.beginPath();
+			ctx.fillStyle = "#91e600";			
+			ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+			
+			ctx.font = 'bold 12pt Calibri';
+			ctx.fillStyle = 'black';
+			ctx.textAlign = 'center';
+			ctx.fillText(txt, centerX, centerY+5);//for animation
+			index++;
+		}		
+	}
+	
+	return {'fromProp':fromProp, 'toProp':toProp};
 }
 function animateHeapify(){
-	counter = 0;
-	loopLimit = moves.length;
-	loopDelay = DELAY;
-	
-	looper();
+	looper(null, {
+		'counter':0,
+		'limit':moves.length,
+		'counterActionFunc':function(counter){return counter+1;},
+		'limitActionFunc':function(counter, limit){return (counter<limit)?true:false;},
+		'delay':DELAY,
+		'bodyFunc':function(plo, lo){
+			currentFromIndex = moves[lo.counter].fromNode; 
+			currentToIndex = moves[lo.counter].toNode;
+			isSwap = moves[lo.counter].isSwap;
+
+			var r = draw();
+			var fromProp = r.fromProp;
+			var toProp = r.toProp;					
+			var ctx = canvas_board.getContext("2d");			
+			
+			//inner loop or the animator loop
+			looper(lo, {
+				'counter':0,
+				'limit':10,
+				'counterActionFunc':function(counter){return counter+1;},
+				'limitActionFunc':function(counter, limit){return (counter<limit)?true:false;},
+				'delay':ANIMATIONDELAY,
+				'bodyFunc':function(plo2, lo2){				
+					if(isSwap==true){
+						//animate the two compared elements					
+						var xFactor = (fromProp.centerX - toProp.centerX)/(lo2.limit-1);
+						var slope = (fromProp.centerY - toProp.centerY)/(fromProp.centerX - toProp.centerX);
+						var fromY = 0;
+							
+						if(lo2.counter>0){//erase tail
+							ctx.beginPath();		
+							fromY = slope*((lo2.counter-1)*xFactor)*(-1);
+							ctx.arc(fromProp.centerX+((lo2.counter-1)*xFactor*(-1)), fromProp.centerY+fromY, fromProp.radius+1, 0, 2 * Math.PI, false);
+							ctx.fillStyle = "rgb(17,17,17)";
+							ctx.fill();
+						}
+						fromY = slope*(lo2.counter*xFactor)*(-1);
+						
+						ctx.beginPath();		
+						ctx.arc(fromProp.centerX+(lo2.counter*xFactor*(-1)), fromProp.centerY+fromY, fromProp.radius, 0, 2 * Math.PI, false);
+						ctx.fillStyle = "rgb(65,105,225)";
+						ctx.fill();
+						ctx.font = 'bold 12pt Calibri';
+						ctx.fillStyle = 'black';
+						ctx.textAlign = 'center';
+						ctx.fillText(fromProp.txt, fromProp.centerX+(lo2.counter*xFactor*(-1)), fromProp.centerY+5+fromY);
+						
+						var toY = 0;
+						if(lo2.counter>0){//erase tail
+							ctx.beginPath();		
+							toY = slope*((lo2.counter-1)*xFactor);
+							ctx.arc(toProp.centerX+((lo2.counter-1)*xFactor), toProp.centerY+toY, toProp.radius+1, 0, 2 * Math.PI, false);
+							ctx.fillStyle = "rgb(17,17,17)";
+							ctx.fill();
+						}
+						toY = slope*(lo2.counter*xFactor);
+						
+						ctx.beginPath();
+						ctx.arc(toProp.centerX+(lo2.counter*xFactor), toProp.centerY+toY, toProp.radius, 0, 2 * Math.PI, false);
+						ctx.fillStyle = "rgb(65,105,225)";
+						ctx.fill();
+						ctx.font = 'bold 12pt Calibri';
+						ctx.fillStyle = 'black';
+						ctx.textAlign = 'center';
+						ctx.fillText(toProp.txt, toProp.centerX+(lo2.counter*xFactor), toProp.centerY+5+toY);
+					}else{
+						//animate the two compared elements					
+						ctx.beginPath();		
+						ctx.arc(fromProp.centerX, fromProp.centerY, fromProp.radius, 0, 2 * Math.PI, false);
+						ctx.fillStyle = "rgb(65,105,225)";
+						ctx.fill();
+						ctx.font = 'bold 12pt Calibri';
+						ctx.fillStyle = 'black';
+						ctx.textAlign = 'center';
+						ctx.fillText(fromProp.txt, fromProp.centerX, fromProp.centerY+5);
+						
+						ctx.beginPath();
+						ctx.arc(toProp.centerX, toProp.centerY, toProp.radius, 0, 2 * Math.PI, false);
+						ctx.fillStyle = "rgb(65,105,225)";
+						ctx.fill();
+						ctx.font = 'bold 12pt Calibri';
+						ctx.fillStyle = 'black';
+						ctx.textAlign = 'center';
+						ctx.fillText(toProp.txt, toProp.centerX, toProp.centerY+5);
+					}
+					
+					return true;
+				},
+				'doneFunc':function(plo2){
+					if(isSwap==true){
+						var tmp = array_items_animated[currentToIndex];
+						array_items_animated[currentToIndex] = array_items_animated[currentFromIndex];
+						array_items_animated[currentFromIndex] = tmp;
+					}
+					looper(null, plo2);
+				}
+			});
+			return false;//do not proceed. let inner loop finish first
+		},
+		'doneFunc':function(plo){
+			currentFromIndex=-1;
+			currentToIndex=-1;
+			draw();
+			debug("--DONE--");
+		}
+	});
 }
 //sift-down
 function maxHeapify(node){
@@ -166,7 +334,7 @@ function maxHeapify(node){
 }
 function buildMaxHeap(){
 	var lastParent = parent((array_items.length - 1));
-	if(lastParent <= 0){
+	if(lastParent < 0){
 		return;
 	}
 	for(var i=lastParent;i>=0;--i){
@@ -189,17 +357,9 @@ function generateInput(size){
 	}
 }
 function resizeEvent(){
-	var remainder = window.innerWidth%(array_items.length+1);
-	var factor = Math.floor(window.innerWidth/(array_items.length+1));
-	canvas_board.setAttribute('width', window.innerWidth-remainder-factor);//right margin
+	canvas_board.setAttribute('width', window.innerWidth-60);//right margin
 	canvas_board.setAttribute('height', window.innerHeight-100);//bottom margin
 	draw();
-}
-function onDone(){
-	currentFromIndex = -1;
-	currentToIndex = -1;
-	draw();
-	debug("--DONE--");
 }
 function run(){	
 	debug_board = document.getElementById("debugger");
@@ -213,18 +373,16 @@ function run(){
 window.onload = run;
 </script>
 <style>
-body{
-	background-color: black;
-}
-#board{
-	border: 1px solid #CCCCCC;
-	background-color: black;
-}
+*{padding:0;margin:0;}
+body{background-color: black;}
+#board{border: 1px solid #555555;background-color: #111111;margin-left:30px;}
+p{margin:10px 10px 10px 30px;}
+#debugger{margin:5px 10px 10px 30px;list-style:none;}
 </style>
 </head>
 <body text="white">
 <p>Heap Data Structure and Algorithm</p>
 <canvas id="board"></canvas>
-<div id="debugger"></div>
+<ul id="debugger"></ul>
 </body>
 </html>
