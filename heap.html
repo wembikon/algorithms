@@ -68,77 +68,7 @@ function parent(node){
 var currentFromIndex=-1;
 var currentToIndex=-1;
 var isSwap=false;
-/*
-function draw2(){
-	if(array_items.length <= 0){//dont draw if nothing to draw
-		return;
-	}
-	
-	var ctx = canvas_board.getContext("2d");
-	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);		
-	
-	var boxWidth = canvas_board.width;
-	var boxHeight = canvas_board.height;
-	
-	var levels = Math.floor(Math.log2(array_items.length));
-	var bottomElementCount = Math.pow(2, levels);
-	
-	var circleBoxHeight = Math.floor(boxHeight / (levels+1));
-	var centerHeightOffset = Math.floor(circleBoxHeight / 2);
-		
-	var index = 0;
-	var fromProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
-	var toProp = {'centerX':0, 'centerY':0, 'radius':0, 'txt':''};
-	for(i=0;i<=levels;++i){
-		var levelElementCount = Math.floor(Math.pow(2, i));
-		var levelBoxWidth = boxWidth / levelElementCount;		
-		var centerWidthOffset = Math.floor(levelBoxWidth / 2);
-		
-		for(j=0;index<array_items.length && j<levelElementCount;++j){
-			var radius = (array_items.length > 30) ? 12 : 20;
-			var centerX = ((j+1)*levelBoxWidth) - centerWidthOffset;
-			var centerY = (i*circleBoxHeight) + centerHeightOffset;
-			var txt = array_items_animated[index];
-			
-			//save properties for animation later
-			if(index==currentFromIndex){
-				fromProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
-			}else if(index==currentToIndex){
-				toProp = {'centerX':centerX, 'centerY':centerY, 'radius':radius, 'txt':txt};
-			}
-			
-			ctx.beginPath();
-			ctx.fillStyle = "#91e600";			
-			ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-			ctx.fill();
-			
-			ctx.font = 'bold 12pt Calibri';
-			ctx.fillStyle = 'black';
-			ctx.textAlign = 'center';
-			ctx.fillText(txt, centerX, centerY+5);//for animation
-			index++;
-		}
-		
-		//animate the two compared elements
-		ctx.beginPath();		
-		ctx.arc(fromProp.centerX, fromProp.centerY, fromProp.radius, 0, 2 * Math.PI, false);
-		ctx.fillStyle = "rgb(75,0,130)";
-		ctx.fill();
-		ctx.font = 'bold 12pt Calibri';
-		ctx.fillStyle = 'black';
-		ctx.textAlign = 'center';
-		ctx.fillText(fromProp.txt, fromProp.centerX, fromProp.centerY+5);
-		
-		ctx.beginPath();
-		ctx.arc(toProp.centerX, toProp.centerY, toProp.radius, 0, 2 * Math.PI, false);
-		ctx.fillStyle = "rgb(75,0,130)";
-		ctx.fill();
-		ctx.font = 'bold 12pt Calibri';
-		ctx.fillStyle = 'black';
-		ctx.textAlign = 'center';
-		ctx.fillText(toProp.txt, toProp.centerX, toProp.centerY+5);
-	}
-}*/
+
 function draw(){
 	if(array_items.length <= 0){//dont draw if nothing to draw
 		return;
