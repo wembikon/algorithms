@@ -33,7 +33,7 @@ function debug(text){
 }
 function showInfo(itemcount, movecount){
 	var info = document.getElementById("info");
-	info.innerHTML = "items:"+itemcount;
+	info.innerHTML = "items:"+itemcount+", moves:"+movecount;
 }
 function looper(parentLooperObj, looperObj){
 	setTimeout(function(){	
@@ -227,7 +227,7 @@ function run(){
 	resizeEvent();
 	window.onresize=resizeEvent;	
 	heapSort();	
-	showInfo(array_items.length);
+	showInfo(array_items.length, moves.length);
 	animateHeapify();
 }
 window.onload = run;

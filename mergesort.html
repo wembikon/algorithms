@@ -36,7 +36,7 @@ function debug(text){
 }
 function showInfo(itemcount, movecount){
 	var info = document.getElementById("info");
-	info.innerHTML = "items:"+itemcount;
+	info.innerHTML = "items:"+itemcount+", moves:"+movecount;
 }
 function getMaxItem(i, len){
 	if(len<=0){
@@ -212,7 +212,7 @@ function run(){
 	resizeEvent();
 	window.onresize=resizeEvent;
 	mergeSort(0,ELEMENTSIZE);
-	showInfo(array_items.length);
+	showInfo(array_items.length, array_items_moves.length);
 	mergeSortAnimated();
 	draw();
 }
