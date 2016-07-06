@@ -26,6 +26,10 @@ function debug(text){
 	li.appendChild(textnode);
 	debug_board.insertBefore(li, debug_board.firstChild);
 }
+function showInfo(itemcount, movecount){
+	var info = document.getElementById("info");
+	info.innerHTML = "items:"+itemcount;
+}
 function getMaxItem(i, len){
 	if(len<=0){
 		return 0;
@@ -164,6 +168,7 @@ function run(){
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
 	window.onresize=resizeEvent;//only attach this even after we get the number of elements
+	showInfo(array_items.length);
 	insertionSort();
 }
 window.onload = run;
@@ -177,7 +182,7 @@ p{margin:10px 10px 10px 30px;}
 </style>
 </head>
 <body text="white">
-<p>Insertion Sort Algorithm</p>
+<p>Insertion Sort Algorithm [<span  id="info"></span>]</p>
 <canvas id="board"></canvas>
 <ul id="debugger"></ul>
 </body>

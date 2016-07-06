@@ -15,7 +15,7 @@ our stored moves. also, before we started, we created a copy of the actual array
 
 
 //==============================================
-var ELEMENTSIZE = 400;
+var ELEMENTSIZE = 100;
 var DELAY = 10;
 //==============================================
 
@@ -33,6 +33,10 @@ function debug(text){
 	var textnode = document.createTextNode(text);
 	li.appendChild(textnode);
 	debug_board.insertBefore(li, debug_board.firstChild);
+}
+function showInfo(itemcount, movecount){
+	var info = document.getElementById("info");
+	info.innerHTML = "items:"+itemcount;
 }
 function getMaxItem(i, len){
 	if(len<=0){
@@ -208,6 +212,7 @@ function run(){
 	resizeEvent();
 	window.onresize=resizeEvent;
 	mergeSort(0,ELEMENTSIZE);
+	showInfo(array_items.length);
 	mergeSortAnimated();
 	draw();
 }
@@ -222,7 +227,7 @@ p{margin:10px 10px 10px 30px;}
 </style>
 </head>
 <body text="white">
-<p>Merge Sort Algorithm</p>
+<p>Merge Sort Algorithm [<span  id="info"></span>]</p>
 <canvas id="board"></canvas>
 <ul id="debugger"></ul>
 </body>

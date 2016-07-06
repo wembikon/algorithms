@@ -13,7 +13,7 @@
 
 //==============================================
 var ELEMENTSIZE = 50;
-var DELAY = 10;
+var DELAY = 5;
 //==============================================
 
 
@@ -25,6 +25,10 @@ function debug(text){
 	var textnode = document.createTextNode(text);
 	li.appendChild(textnode);
 	debug_board.insertBefore(li, debug_board.firstChild);
+}
+function showInfo(itemcount, movecount){
+	var info = document.getElementById("info");
+	info.innerHTML = "items:"+itemcount;
 }
 function getMaxItem(i, len){
 	if(len<=0){
@@ -165,6 +169,7 @@ function run(){
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
 	window.onresize=resizeEvent;
+	showInfo(array_items.length);
 	simpleSort();
 }
 window.onload = run;
@@ -178,7 +183,7 @@ p{margin:10px 10px 10px 30px;}
 </style>
 </head>
 <body text="white">
-<p>Simple Sort Algorithm</p>
+<p>Simple Sort Algorithm [<span  id="info"></span>]</p>
 <canvas id="board"></canvas>
 <ul id="debugger"></ul>
 </body>

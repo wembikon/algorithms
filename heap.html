@@ -13,7 +13,7 @@
 
 
 //==============================================
-var ELEMENTSIZE = 46;
+var ELEMENTSIZE = 32;
 var DELAY = 1;
 var ANIMATIONDELAY = 1;
 //==============================================
@@ -143,7 +143,7 @@ function animateHeapify(){
 			//inner loop or the animator loop
 			looper(lo, {
 				'counter':0,
-				'limit':100,
+				'limit':30,
 				'counterActionFunc':function(counter){return counter+1;},
 				'limitActionFunc':function(counter, limit){return (counter<limit)?true:false;},
 				'delay':ANIMATIONDELAY,
