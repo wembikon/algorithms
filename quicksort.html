@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="View of Algorithms">
-<meta name="keywords" content="Algorithms, Sorting, Heapsort">
+<meta name="keywords" content="Algorithms, Sorting, Quicksort">
 <meta name="author" content="Adrian T. Visarra">
-<meta name="date" content="June 25, 2016">
+<meta name="date" content="July 6, 2016">
 <meta name="email" content="beaujamo@gmail.com">
-<title>Heap Sort</title>
+<title>Quick Sort</title>
 <script>
 
 
@@ -23,17 +23,6 @@ var array_items = [];
 var array_items_animated = [];
 var moves = [];
 
-function debugHeap(){
-	var levels = Math.floor(Math.log2(ELEMENTSIZE));
-	for(var i=0;i<=levels;++i){
-		var s = "";
-		var w = Math.floor(Math.pow(2, i));		
-		for(var j=w-1;j<array_items.length && j<w+w-1;++j){
-			s += array_items[j]+", ";
-		}
-		debug(s);
-	}
-}
 function debug(text){
 	var li = document.createElement("li");
 	var textnode = document.createTextNode(text);
@@ -97,6 +86,7 @@ function generateInput(size){
 }
 var currentFromIndex=-1;
 var currentToIndex=-1;
+var currentPivotIndex=-1;
 function draw(){
 	var ctx = canvas_board.getContext("2d");
 	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);
@@ -115,7 +105,7 @@ function draw(){
 		var width_offset = Math.floor(element_width/2);
 		var height_offset = box_height - element_height;
 		ctx.moveTo(i*element_width+width_offset, height_offset);
-		if(i==currentFromIndex || i==currentToIndex){
+		if(i==currentFromIndex || i==currentToIndex || i==currentPivotIndex){
 			ctx.strokeStyle = '#FF0000';
 		}else{
 			ctx.strokeStyle = '#91e600';
@@ -136,13 +126,13 @@ function run(){
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
 	window.onresize=resizeEvent;	
-	heapSort();	
+	quickSort(0, array_items.length-1);
 	showInfo(array_items.length, moves.length);
-	animatedHeapsort();
+	animatedQuickSort();
 }
 window.onload = run;
 //################################ALGORITHM HERE#################################
-function animatedHeapsort(){
+function animatedQuickSort(){
 	looper(null, {
 		'counter':0,
 		'limit':moves.length,
@@ -150,8 +140,9 @@ function animatedHeapsort(){
 		'limitActionFunc':function(counter, limit){return (counter<limit)?true:false;},
 		'delay':DELAY,
 		'bodyFunc':function(plo, lo){
-			currentFromIndex = moves[lo.counter].fromNode; 
-			currentToIndex = moves[lo.counter].toNode;
+			currentFromIndex = moves[lo.counter].fromIndex;
+			currentToIndex = moves[lo.counter].toIndex;
+			currentPivotIndex = moves[lo.counter].pivotIndex;
 			if(moves[lo.counter].isSwap==true){
 				var tmp = array_items_animated[currentFromIndex];
 				array_items_animated[currentFromIndex] = array_items_animated[currentToIndex];
@@ -165,65 +156,36 @@ function animatedHeapsort(){
 		'doneFunc':function(plo){
 			currentFromIndex=-1;
 			currentToIndex=-1;
+			currentPivotIndex=-1;
 			draw();
 			debug("--DONE--");
 		}
 	});
 }
-function left(node){
-	return ((node * 2) + 1);
-}
-function right(node){
-	return ((node * 2) + 2);
-}
-function parent(node){
-	return Math.floor((node - 1) / 2);
-}
-function maxHeapify(node, len){
-	var l = left(node);
-	var r = right(node);
-	var largest = node;//assume
-		
-	if(l < len){
-		//we only animate valid element
-		moves.push({'fromNode':largest, 'fromNodeValue':array_items[largest], 'toNode':l, 'toNodeValue':array_items[l], 'isSwap':false});
-		if(array_items[l] > array_items[largest]){
-			largest = l;
-		}
-	}	
-	if(r < len){
-		moves.push({'fromNode':largest, 'fromNodeValue':array_items[largest], 'toNode':r, 'toNodeValue':array_items[r], 'isSwap':false});
-		if(array_items[r] > array_items[largest]){
-			largest = r;
+function partition(p, r){
+	var pivot = array_items[r];
+	var q = p;
+	for(var i=p;i<r;++i){		
+		if(array_items[i] < pivot){
+			moves.push({'pivotIndex':r, 'fromIndex':i, 'fromValue':array_items[i], 'toIndex':q, 'toValue':array_items[q], 'isSwap':true});
+			var tmp = array_items[q];
+			array_items[q] = array_items[i];
+			array_items[i] = tmp;
+			q++;
+		}else{
+			moves.push({'pivotIndex':r, 'fromIndex':i, 'fromValue':array_items[i], 'toIndex':q, 'toValue':array_items[q], 'isSwap':false});
 		}
 	}
-	
-	if(largest != node){
-		//swap new largest with node
-		var tmp = array_items[node];
-		array_items[node] = array_items[largest];
-		array_items[largest] = tmp;
-		moves.push({'fromNode':node, 'fromNodeValue':array_items[node], 'toNode':largest, 'toNodeValue':array_items[largest], 'isSwap':true});
-		
-		maxHeapify(largest, len);
-	}
+	array_items[r] = array_items[q];
+	array_items[q] = pivot;
+	moves.push({'pivotIndex':r, 'fromIndex':r, 'fromValue':array_items[r], 'toIndex':q, 'toValue':array_items[q], 'isSwap':true});
+	return q;
 }
-function heapSort(){
-	var lastParent = parent((array_items.length - 1));
-	if(lastParent < 0){
-		return;
-	}	
-	for(var i=lastParent;i>=0;--i){
-		maxHeapify(i, array_items.length);		
-	}
-	var lastitem = array_items.length-1;
-	while(lastitem > 0){
-		var tmp = array_items[lastitem];
-		array_items[lastitem] = array_items[0];
-		array_items[0] = tmp;
-		moves.push({'fromNode':lastitem, 'fromNodeValue':array_items[lastitem], 'toNode':0, 'toNodeValue':array_items[0], 'isSwap':true});
-		maxHeapify(0, lastitem);
-		--lastitem;
+function quickSort(p, r){
+	if(p < r){
+		var q = partition(p, r);		
+		quickSort(p, q-1);
+		quickSort(q+1, r);
 	}
 }
 </script>
@@ -236,7 +198,7 @@ p{margin:10px 10px 10px 30px;}
 </style>
 </head>
 <body text="white">
-<p>Heap Sort Algorithm [<span  id="info"></span>]</p>
+<p>Quick Sort Algorithm [<span  id="info"></span>]</p>
 <canvas id="board"></canvas>
 <ul id="debugger"></ul>
 </body>

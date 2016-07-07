@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="View of Algorithms">
-<meta name="keywords" content="Algorithms, Sorting, Merge">
+<meta name="keywords" content="Algorithms, Sorting, Mergesort">
 <meta name="author" content="Adrian T. Visarra">
 <meta name="date" content="June 21, 2016">
 <meta name="email" content="beaujamo@gmail.com">
-<meta name="algorithm" content="since javascript has no delay, it is impossible to use multi-branch recursive call using setTimeout for delay.
-so I just solve first using merge sort and each move is saved in an array. after the actual solution, we will animate the solution using
-our stored moves. also, before we started, we created a copy of the actual array in order to be used for the animation">
 <title>Merge Sort</title>
 <script>
 
@@ -23,11 +20,11 @@ var DELAY = 10;
 var debug_board;
 var canvas_board;
 var array_items = [];
-//will be used for animation of the algorithm
 var array_items_animated = [];
-//we store the sorting moves so that we can use it for animation later after the actual
-//array_items are solved
-var array_items_moves = [];
+var moves = [];
+var left_array_space = [];//space complexity is n/2. free space to be used during merging
+left_array_space[Math.ceil(ELEMENTSIZE/2 - 1)]=0;//static array definition javascript style
+
 function debug(text){
 	var li = document.createElement("li");
 	var textnode = document.createTextNode(text);
@@ -37,6 +34,19 @@ function debug(text){
 function showInfo(itemcount, movecount){
 	var info = document.getElementById("info");
 	info.innerHTML = "items:"+itemcount+", moves:"+movecount;
+}
+function looper(parentLooperObj, looperObj){
+	setTimeout(function(){	
+		if(looperObj.limitActionFunc(looperObj.counter, looperObj.limit)){
+			var proceed = looperObj.bodyFunc(parentLooperObj, looperObj);
+			looperObj.counter = looperObj.counterActionFunc(looperObj.counter);
+			if(proceed==true){
+				looper(parentLooperObj, looperObj);
+			}
+		}else{
+			looperObj.doneFunc(parentLooperObj);
+		}
+	},looperObj.delay);
 }
 function getMaxItem(i, len){
 	if(len<=0){
@@ -89,96 +99,6 @@ function draw(){
 		ctx.stroke();
 	}
 }
-//space complexity is n/2. free space to be used during merging
-var left_array_items = [];
-//we simulate a static array with size half of the element size in javascript
-left_array_items[Math.ceil(ELEMENTSIZE/2 - 1)]=0;
-function merge(fhalfIndex, fhalfLen, shalfIndex, shalfLen){
-	var tmpIndex = fhalfIndex;
-	var i = fhalfIndex;
-	var j = shalfIndex;	
-	//copy only the elements equivalent to the left element size
-	while(tmpIndex<(fhalfIndex+fhalfLen)){
-		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
-			left_array_items[tmpIndex] = array_items[i];
-			array_items_moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
-			i++;
-		}else{
-			left_array_items[tmpIndex] = array_items[j];			
-			array_items_moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
-			j++;
-		}
-		tmpIndex++;
-	}
-	//fill the right half
-	tmpIndex = shalfIndex;
-	while(i<(fhalfIndex+fhalfLen)){
-		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
-			array_items[tmpIndex] = array_items[i];
-			array_items_moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
-			i++;
-		}else{
-			array_items[tmpIndex] = array_items[j];
-			array_items_moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
-			j++;
-		}		
-		tmpIndex++;
-	}
-	//fill the left half
-	tmpIndex = fhalfIndex;
-	while(tmpIndex<(fhalfIndex+fhalfLen)){
-		array_items[tmpIndex] = left_array_items[tmpIndex];
-		tmpIndex++;
-	}
-}
-function mergeSort(i, len){	
-	if(len<=1){
-		return;
-	}else{		
-		var fhalf = Math.ceil(len/2);
-		var shalf = len - fhalf;	
-		mergeSort(i, fhalf);
-		mergeSort(i + fhalf, shalf);
-		merge(i, fhalf, i+fhalf, shalf);		
-	}
-}
-var counter;
-var loopLimit;
-var loopDelay;
-function looper(){
-	setTimeout(function(){
-		//if one element only, we will not go inside here
-		if(counter<loopLimit){			
-			//body======			
-			currentFromIndex = array_items_moves[counter].fromIndex;
-			currentToIndex = array_items_moves[counter].toIndex;
-			array_items_animated[currentToIndex] = array_items_moves[counter].value;
-			counter++;
-			draw();
-			//body======
-			if(counter<loopLimit){
-				looper();
-			}else{
-				onDone();
-			}
-		}else{
-			onDone();
-		}
-	}, loopDelay);
-}
-function mergeSortAnimated(){
-	counter = 0;
-	loopLimit = array_items_moves.length;
-	loopDelay = DELAY;
-	
-	currentFromIndex = array_items_moves[counter].fromIndex;
-	currentToIndex = array_items_moves[counter].toIndex;
-	array_items_animated[currentToIndex] = array_items_moves[counter].value;
-	counter++;
-	draw();
-			
-	looper();
-}
 function generateInput(size){
 	var tmparray = [];
 	for(var i=1;i<=size;i++){
@@ -199,12 +119,6 @@ function resizeEvent(){
 	canvas_board.setAttribute('height', window.innerHeight-100);//bottom margin
 	draw();
 }
-function onDone(){
-	currentFromIndex = -1;
-	currentToIndex = -1;
-	draw();
-	debug("--DONE--");
-}
 function run(){	
 	debug_board = document.getElementById("debugger");
 	canvas_board = document.getElementById("board");	
@@ -212,11 +126,84 @@ function run(){
 	resizeEvent();
 	window.onresize=resizeEvent;
 	mergeSort(0,ELEMENTSIZE);
-	showInfo(array_items.length, array_items_moves.length);
-	mergeSortAnimated();
-	draw();
+	showInfo(array_items.length, moves.length);
+	animatedMergeSort();
 }
 window.onload = run;
+//################################ALGORITHM HERE#################################
+function animatedMergeSort(){
+	looper(null, {
+		'counter':0,
+		'limit':moves.length,
+		'counterActionFunc':function(counter){return counter+1;},
+		'limitActionFunc':function(counter, limit){return (counter<limit)?true:false;},
+		'delay':DELAY,
+		'bodyFunc':function(plo, lo){
+			currentFromIndex = moves[lo.counter].fromIndex;
+			currentToIndex = moves[lo.counter].toIndex;
+			array_items_animated[currentToIndex] = moves[lo.counter].value;
+			
+			draw();
+						
+			return true;
+		},
+		'doneFunc':function(plo){
+			currentFromIndex=-1;
+			currentToIndex=-1;
+			draw();
+			debug("--DONE--");
+		}
+	});
+}
+function merge(fhalfIndex, fhalfLen, shalfIndex, shalfLen){
+	var tmpIndex = fhalfIndex;
+	var i = fhalfIndex;
+	var j = shalfIndex;	
+	//copy only the elements equivalent to the left element size
+	while(tmpIndex<(fhalfIndex+fhalfLen)){
+		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
+			left_array_space[tmpIndex] = array_items[i];
+			moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
+			i++;
+		}else{
+			left_array_space[tmpIndex] = array_items[j];			
+			moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
+			j++;
+		}
+		tmpIndex++;
+	}
+	//fill the right half
+	tmpIndex = shalfIndex;
+	while(i<(fhalfIndex+fhalfLen)){
+		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
+			array_items[tmpIndex] = array_items[i];
+			moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
+			i++;
+		}else{
+			array_items[tmpIndex] = array_items[j];
+			moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
+			j++;
+		}		
+		tmpIndex++;
+	}
+	//fill the left half
+	tmpIndex = fhalfIndex;
+	while(tmpIndex<(fhalfIndex+fhalfLen)){
+		array_items[tmpIndex] = left_array_space[tmpIndex];
+		tmpIndex++;
+	}
+}
+function mergeSort(i, len){	
+	if(len<=1){
+		return;
+	}else{		
+		var fhalf = Math.ceil(len/2);
+		var shalf = len - fhalf;	
+		mergeSort(i, fhalf);
+		mergeSort(i + fhalf, shalf);
+		merge(i, fhalf, i+fhalf, shalf);		
+	}
+}
 </script>
 <style>
 *{padding:0;margin:0;}
