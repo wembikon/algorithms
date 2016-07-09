@@ -12,7 +12,7 @@
 
 
 //==============================================
-var ELEMENTSIZE = 400;
+var ELEMENTSIZE = 200;
 var DELAY = 10;
 //==============================================
 
@@ -200,10 +200,10 @@ function maxHeapify(node, len){
 	
 	if(largest != node){
 		//swap new largest with node
+		moves.push({'fromNode':node, 'fromNodeValue':array_items[node], 'toNode':largest, 'toNodeValue':array_items[largest], 'isSwap':true});
 		var tmp = array_items[node];
 		array_items[node] = array_items[largest];
-		array_items[largest] = tmp;
-		moves.push({'fromNode':node, 'fromNodeValue':array_items[node], 'toNode':largest, 'toNodeValue':array_items[largest], 'isSwap':true});
+		array_items[largest] = tmp;		
 		
 		maxHeapify(largest, len);
 	}
