@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="description" content="View of Algorithms">
-<meta name="keywords" content="Algorithms, Sorting, Mergesort">
+<meta name="keywords" content="Algorithms, Sorting, Quicksort, Hoare">
 <meta name="author" content="Adrian T. Visarra">
-<meta name="date" content="June 21, 2016">
+<meta name="date" content="July 6, 2016">
 <meta name="email" content="beaujamo@gmail.com">
-<title>Merge Sort</title>
+<title>Quick Sort - Hoare</title>
 <script>
 
 
 //==============================================
-var ELEMENTSIZE = 400;
+var ELEMENTSIZE = 200;
 var DELAY = 10;
 //==============================================
 
@@ -22,8 +22,6 @@ var canvas_board;
 var array_items = [];
 var array_items_animated = [];
 var moves = [];
-var left_array_space = [];//space complexity is n/2. free space to be used during merging
-left_array_space[Math.ceil(ELEMENTSIZE/2 - 1)]=0;//static array definition javascript style
 
 function debug(text){
 	var li = document.createElement("li");
@@ -71,34 +69,6 @@ function getMaxItem(i, len){
 		}
 	}	
 }
-var currentFromIndex=-1;
-var currentToIndex=-1;
-function draw(){
-	var ctx = canvas_board.getContext("2d");
-	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);
-	var max_item = getMaxItem(0, array_items_animated.length);
-	var box_width = canvas_board.width;
-	var box_height = canvas_board.height;
-	var element_width = 0;
-	var element_height = 0;	
-	var i = 0;
-	for(i=0;i<array_items_animated.length;i++){
-		element_width = box_width / array_items_animated.length;
-		element_height = Math.floor((array_items_animated[i]/max_item) * box_height);
-		ctx.beginPath();
-		var width_offset = Math.floor(element_width/2);
-		var height_offset = box_height - element_height;
-		ctx.moveTo(i*element_width+width_offset, height_offset);
-		if(i==currentFromIndex || i==currentToIndex){
-			ctx.strokeStyle = '#FF0000';
-		}else{
-			ctx.strokeStyle = '#91e600';
-		}
-		ctx.lineWidth = element_width - 1;
-		ctx.lineTo(i*element_width+width_offset, element_height + height_offset);
-		ctx.stroke();
-	}
-}
 function generateInput(size){
 	var tmparray = [];
 	for(var i=1;i<=size;i++){
@@ -114,24 +84,56 @@ function generateInput(size){
 		tmparray[randomindex] = -1;
 	}
 }
+var currentFromIndex=-1;
+var currentToIndex=-1;
+var currentPivotIndex=-1;
+function draw(){
+	var ctx = canvas_board.getContext("2d");
+	ctx.clearRect(0, 0, canvas_board.width, canvas_board.height);
+	var max_item = getMaxItem(0, array_items_animated.length);
+	
+	var box_width = canvas_board.width;
+	var box_height = canvas_board.height;
+	var element_width = 0;
+	var element_height = 0;	
+	var i = 0;
+	
+	for(i=0;i<array_items_animated.length;i++){
+		element_width = box_width / array_items_animated.length;
+		element_height = Math.floor((array_items_animated[i]/max_item) * box_height);
+		ctx.beginPath();
+		var width_offset = Math.floor(element_width/2);
+		var height_offset = box_height - element_height;
+		ctx.moveTo(i*element_width+width_offset, height_offset);
+		if(i==currentFromIndex || i==currentToIndex || i==currentPivotIndex){
+			ctx.strokeStyle = '#FF0000';
+		}else{
+			ctx.strokeStyle = '#91e600';
+		}
+		ctx.lineWidth = element_width - 1;
+		ctx.lineTo(i*element_width+width_offset, element_height + height_offset);
+		ctx.stroke();
+	}
+}
 function resizeEvent(){
 	canvas_board.setAttribute('width', window.innerWidth-60);//right margin
 	canvas_board.setAttribute('height', window.innerHeight-100);//bottom margin
 	draw();
 }
-function run(){	
+function run(){
 	debug_board = document.getElementById("debugger");
 	canvas_board = document.getElementById("board");	
 	generateInput(ELEMENTSIZE);
 	resizeEvent();
-	window.onresize=resizeEvent;
-	mergeSort(0,ELEMENTSIZE);
+	window.onresize=resizeEvent;	
+	quickSort(0, array_items.length-1);
 	showInfo(array_items.length, moves.length);
-	animatedMergeSort();
+	animatedQuickSort();
+	draw();
 }
 window.onload = run;
 //################################ALGORITHM HERE#################################
-function animatedMergeSort(){
+function animatedQuickSort(){
 	looper(null, {
 		'counter':0,
 		'limit':moves.length,
@@ -141,67 +143,60 @@ function animatedMergeSort(){
 		'bodyFunc':function(plo, lo){
 			currentFromIndex = moves[lo.counter].fromIndex;
 			currentToIndex = moves[lo.counter].toIndex;
-			array_items_animated[currentToIndex] = moves[lo.counter].value;
-			
-			draw();
+			currentPivotIndex = moves[lo.counter].pivotIndex;
+			if(moves[lo.counter].isSwap==true){
+				var tmp = array_items_animated[currentFromIndex];
+				array_items_animated[currentFromIndex] = array_items_animated[currentToIndex];
+				array_items_animated[currentToIndex] = tmp;
+			}
+
+			draw();	
 						
 			return true;
 		},
 		'doneFunc':function(plo){
 			currentFromIndex=-1;
 			currentToIndex=-1;
+			currentPivotIndex=-1;
 			draw();
 			debug("--DONE--");
 		}
 	});
 }
-function merge(fhalfIndex, fhalfLen, shalfIndex, shalfLen){
-	var tmpIndex = fhalfIndex;
-	var i = fhalfIndex;
-	var j = shalfIndex;	
-	//copy only the elements equivalent to the left element size
-	while(tmpIndex<(fhalfIndex+fhalfLen)){
-		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
-			left_array_space[tmpIndex] = array_items[i];
-			moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
+function hoarepartition(p, r){
+	var pivot = array_items[p];
+	var i = p - 1;
+	var j = r + 1;
+	while(true){
+		do{
 			i++;
-		}else{
-			left_array_space[tmpIndex] = array_items[j];			
-			moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
-			j++;
+			if(array_items[i]<pivot){
+				moves.push({'pivotIndex':p, 'fromIndex':-1, 'fromValue':-1, 'toIndex':i, 'toValue':array_items[i], 'isSwap':false});
+			}
+		}while(array_items[i]<pivot);
+		
+		do{
+			j--;
+			if(array_items[j]>pivot){
+				moves.push({'pivotIndex':p, 'fromIndex':-1, 'fromValue':-1, 'toIndex':j, 'toValue':array_items[j], 'isSwap':false});
+			}
+		}while(array_items[j]>pivot);
+		
+		if(i>=j){
+			return j;
 		}
-		tmpIndex++;
-	}
-	//fill the right half
-	tmpIndex = shalfIndex;
-	while(i<(fhalfIndex+fhalfLen)){
-		if(array_items[i]<=array_items[j] || j==(shalfIndex+shalfLen)){
-			array_items[tmpIndex] = array_items[i];
-			moves.push({'fromIndex':i, 'value':array_items[i], 'toIndex':tmpIndex});
-			i++;
-		}else{
-			array_items[tmpIndex] = array_items[j];
-			moves.push({'fromIndex':j, 'value':array_items[j], 'toIndex':tmpIndex});
-			j++;
-		}		
-		tmpIndex++;
-	}
-	//fill the left half
-	tmpIndex = fhalfIndex;
-	while(tmpIndex<(fhalfIndex+fhalfLen)){
-		array_items[tmpIndex] = left_array_space[tmpIndex];
-		tmpIndex++;
+		
+		var tmp = array_items[i];
+		array_items[i] = array_items[j];
+		array_items[j] = tmp;
+		moves.push({'pivotIndex':p, 'fromIndex':i, 'fromValue':array_items[i], 'toIndex':j, 'toValue':array_items[j], 'isSwap':true});
 	}
 }
-function mergeSort(i, len){	
-	if(len<=1){
-		return;
-	}else{		
-		var fhalf = Math.ceil(len/2);
-		var shalf = len - fhalf;	
-		mergeSort(i, fhalf);
-		mergeSort(i + fhalf, shalf);
-		merge(i, fhalf, i+fhalf, shalf);		
+function quickSort(p, r){
+	if(p < r){
+		var q = hoarepartition(p, r);		
+		quickSort(p, q);
+		quickSort(q+1, r);
 	}
 }
 </script>
@@ -214,7 +209,7 @@ p{margin:10px 10px 10px 30px;}
 </style>
 </head>
 <body text="white">
-<p>Merge Sort Algorithm [<span  id="info"></span>]</p>
+<p>Quick Sort (Hoare) Algorithm [<span  id="info"></span>]</p>
 <canvas id="board"></canvas>
 <ul id="debugger"></ul>
 </body>
