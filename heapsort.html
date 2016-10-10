@@ -212,16 +212,17 @@ function heapSort(){
 	var lastParent = parent((array_items.length - 1));
 	if(lastParent < 0){
 		return;
-	}	
+	}
+	//create heap from array
 	for(var i=lastParent;i>=0;--i){
 		maxHeapify(i, array_items.length);		
 	}
 	var lastitem = array_items.length-1;
 	while(lastitem > 0){
+		moves.push({'fromNode':lastitem, 'fromNodeValue':array_items[lastitem], 'toNode':0, 'toNodeValue':array_items[0], 'isSwap':true});
 		var tmp = array_items[lastitem];
 		array_items[lastitem] = array_items[0];
 		array_items[0] = tmp;
-		moves.push({'fromNode':lastitem, 'fromNodeValue':array_items[lastitem], 'toNode':0, 'toNodeValue':array_items[0], 'isSwap':true});
 		maxHeapify(0, lastitem);
 		--lastitem;
 	}
